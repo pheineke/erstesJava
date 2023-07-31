@@ -9,7 +9,7 @@ public class ChatClient {
     static int hostport = 0000;
 
     public static void main(String[] args) throws IOException {
-        chatinit();
+        chatinitT();
         chat(hostip, hostport);
 
     }
@@ -29,7 +29,26 @@ public class ChatClient {
         }
     }
 
-    public static void chatinit() {
+    public static void chatinitT() throws IOException {
+        hostip = terminalinput("IP: ");
+        hostport = Integer.valueOf(terminalinput("Port: "));
+
+        String user = terminalinput("Username: ");
+        ChatServer.clientconnect(user);
+    }
+
+    public static String terminalinput(String input) throws IOException {
+        System.out.println(input);
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(System.in));
+
+        // Reading data using readLine
+        String name = reader.readLine();
+
+        return name;
+    }
+    public static void chatinitJF() {
+        //JFrame Chatinit
         JPanel chatinitpanel = new JPanel();
         JTextField ipfield = new JTextField(15);
         JTextField portfield = new JTextField(6);
