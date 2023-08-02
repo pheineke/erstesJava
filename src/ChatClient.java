@@ -49,7 +49,7 @@ public class ChatClient {
                 Color selectedColor = JColorChooser.showDialog(frame, "Select Chat Background Color", chatBackgroundColor);
                 if (selectedColor != null) {
                     chatBackgroundColor = selectedColor;
-                    if (chatArea != null) { // Hier prüfen wir, ob chatArea nicht null ist
+                    if (chatArea != null) {
                         chatArea.setBackground(chatBackgroundColor);
                     }
                 }
@@ -106,6 +106,7 @@ public class ChatClient {
             }
         });
 
+
         panel.add(userLabel);
         panel.add(userField);
         panel.add(passwordLabel);
@@ -145,7 +146,7 @@ public class ChatClient {
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
 
-        out.println("chatauth" + username);
+        out.println("chatauth" + "|" + username + "|" + password);
 
         JFrame chatFrame = new JFrame("Chat - " + username);
         chatFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -196,12 +197,19 @@ public class ChatClient {
         chatFrame.pack();
         chatFrame.setVisible(true);
 
-        ServerListener serverListener = new ServerListener();
+        ServerListener serverListener = new ServerListener(in);
         Thread listenerThread = new Thread(serverListener);
         listenerThread.start();
     }
 
+
     private static class ServerListener implements Runnable {
+        private BufferedReader in;
+
+        public ServerListener(BufferedReader in) {
+            this.in = in;
+        }
+
         @Override
         public void run() {
             try {
@@ -216,4 +224,6 @@ public class ChatClient {
             }
         }
     }
+
+
 }

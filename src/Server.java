@@ -44,10 +44,10 @@ public class Server {
             try {
                 String inputLine;
                 while ((inputLine = in.readLine()) != null) {
-                    if (inputLine.contains("chatauth")) {
+                    if (inputLine.startsWith("chatauth")) {
                         String[] authInfo = inputLine.split("\\|");
                         if (authInfo.length == 3) {
-                            String username = authInfo[1];
+                            String username = authInfo[1].trim();
                             String password = authInfo[2];
                             handleLogin(clientSocket, username, password);
                         }
@@ -107,17 +107,19 @@ public class Server {
                         }
                     }
 
+                    // Schritt 3: Join-Nachricht beim Verbinden
                     authManager.login(usersocket);
                     userMap.put(usersocket, username);
                     socketlist.add(clientSocket);
-                    System.out.println(usersocket);
-                    System.out.println(username + " " + usersocket + " connected");
 
                     // Sende den Benutzernamen an alle Clients
                     for (Socket socket : socketlist) {
                         PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
                         writer.println(username + " has joined the chat.");
                     }
+
+                    System.out.println(usersocket);
+                    System.out.println(username + " " + usersocket + " connected");
 
                     // Speichere den aktuellen Benutzernamen als vorherigen Benutzernamen für diese IP
                     previousUserMap.put(usersocket, username);
