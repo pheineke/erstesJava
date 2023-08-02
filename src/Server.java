@@ -28,6 +28,7 @@ public class Server {
         private Socket clientSocket;
         private BufferedReader in;
         private PrintWriter out;
+        private String username;
 
         public ClientHandler(Socket socket) throws IOException {
             clientSocket = socket;
@@ -56,11 +57,17 @@ public class Server {
                     }
                     if (inputLine.contains("chatauth")) {
                         System.out.println(inputLine);
-                        String user = inputLine.substring(inputLine.indexOf("chatauth") + 8, inputLine.length());
-                        userlist.add(user);
+                        username = inputLine.substring(inputLine.indexOf("chatauth") + 8);
+                        userlist.add(username);
                         socketlist.add(clientSocket);
                         System.out.println(usersocket);
-                        System.out.println(user + " " + usersocket + " connected");
+                        System.out.println(username + " " + usersocket + " connected");
+
+                        // Sende den Benutzernamen an alle Clients
+                        for (Socket socket : socketlist) {
+                            PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                            writer.println(username + " has joined the chat.");
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -71,6 +78,12 @@ public class Server {
                     out.close();
                     clientSocket.close();
                     socketlist.remove(clientSocket);
+
+                    // Sende eine Nachricht an alle Clients, dass dieser Benutzer den Chat verlassen hat.
+                    for (Socket socket : socketlist) {
+                        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                        writer.println(username + " has left the chat.");
+                    }
                 } catch (IOException e) {
                     System.err.println("Error closing client connection: " + e);
                 }
@@ -90,5 +103,4 @@ public class Server {
 
         return ipAddress;
     }
-
 }
