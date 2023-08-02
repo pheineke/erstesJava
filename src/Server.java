@@ -7,6 +7,7 @@ public class Server {
     private static final int PORT = 3344;
     private static final int MAX_CONNECTIONS = 10;
     private static final HashMap<String, String> userMap = new HashMap<>();
+    private static final HashMap<String, String> previousUserMap = new HashMap<>();
     private static final ArrayList<Socket> socketlist = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
@@ -59,6 +60,14 @@ public class Server {
                     }
                     if (inputLine.contains("chatauth")) {
                         System.out.println(inputLine);
+                        String prevUser = previousUserMap.get(usersocket); // Vorheriger Benutzername
+                        if (prevUser != null) {
+                            // Sende eine Nachricht an alle Clients, dass der vorherige Benutzer den Chat verlassen hat
+                            for (Socket socket : socketlist) {
+                                PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                                writer.println(prevUser + " (previously \"" + prevUser + "\")" + " has left the chat.");
+                            }
+                        }
                         username = inputLine.substring(inputLine.indexOf("chatauth") + 8);
                         userMap.put(usersocket, username);
                         socketlist.add(clientSocket);
@@ -70,6 +79,9 @@ public class Server {
                             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
                             writer.println(username + " has joined the chat.");
                         }
+
+                        // Speichere den aktuellen Benutzernamen als vorherigen Benutzernamen für diese IP
+                        previousUserMap.put(usersocket, username);
                     }
                 }
             } catch (IOException e) {
@@ -89,6 +101,7 @@ public class Server {
 
                     // Entferne den Benutzer aus der Benutzerzuordnung
                     userMap.remove(extractIPAddress(clientSocket.toString()));
+                    previousUserMap.remove(extractIPAddress(clientSocket.toString()));
                 } catch (IOException e) {
                     System.err.println("Error closing client connection: " + e);
                 }
