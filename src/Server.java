@@ -1,11 +1,12 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Server {
     private static final int PORT = 3344;
     private static final int MAX_CONNECTIONS = 10;
-    private static final ArrayList<String> userlist = new ArrayList<>();
+    private static final HashMap<String, String> userMap = new HashMap<>();
     private static final ArrayList<Socket> socketlist = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
@@ -45,20 +46,21 @@ public class Server {
 
                     if (!inputLine.contains("chatauth")) {
                         if (socketlist.contains(clientSocket)) {
-                            String user = (String) userlist.get(socketlist.indexOf(clientSocket));
-                            System.out.println(user);
-                            System.out.println(user + ": " + inputLine);
-                            // Sende die Nachricht an alle Clients
-                            for (Socket socket : socketlist) {
-                                PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-                                writer.println(user + ": " + inputLine);
+                            String user = userMap.get(usersocket);
+                            if (user != null) {
+                                System.out.println(user + ": " + inputLine);
+                                // Sende die Nachricht an alle Clients
+                                for (Socket socket : socketlist) {
+                                    PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                                    writer.println(user + ": " + inputLine);
+                                }
                             }
                         }
                     }
                     if (inputLine.contains("chatauth")) {
                         System.out.println(inputLine);
                         username = inputLine.substring(inputLine.indexOf("chatauth") + 8);
-                        userlist.add(username);
+                        userMap.put(usersocket, username);
                         socketlist.add(clientSocket);
                         System.out.println(usersocket);
                         System.out.println(username + " " + usersocket + " connected");
@@ -84,6 +86,9 @@ public class Server {
                         PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
                         writer.println(username + " has left the chat.");
                     }
+
+                    // Entferne den Benutzer aus der Benutzerzuordnung
+                    userMap.remove(extractIPAddress(clientSocket.toString()));
                 } catch (IOException e) {
                     System.err.println("Error closing client connection: " + e);
                 }
