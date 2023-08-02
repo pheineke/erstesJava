@@ -48,7 +48,11 @@ public class Server {
                             String user = (String) userlist.get(socketlist.indexOf(clientSocket));
                             System.out.println(user);
                             System.out.println(user + ": " + inputLine);
-                            out.println(user + ": " + inputLine);
+                            // Sende die Nachricht an alle Clients
+                            for (Socket socket : socketlist) {
+                                PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                                writer.println(user + ": " + inputLine);
+                            }
                         }
                     }
                     if (inputLine.contains("chatauth")) {
