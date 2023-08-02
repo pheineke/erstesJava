@@ -9,6 +9,7 @@ public class Server {
     private static final HashMap<String, String> userMap = new HashMap<>();
     private static final HashMap<String, String> previousUserMap = new HashMap<>();
     private static final ArrayList<Socket> socketlist = new ArrayList<>();
+    private static final AuthenticationManager authManager = new AuthenticationManager();
 
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(PORT);
@@ -30,7 +31,7 @@ public class Server {
         private Socket clientSocket;
         private BufferedReader in;
         private PrintWriter out;
-        private String username;
+        private String usersocket;
 
         public ClientHandler(Socket socket) throws IOException {
             clientSocket = socket;
@@ -43,8 +44,6 @@ public class Server {
             try {
                 String inputLine;
                 while ((inputLine = in.readLine()) != null) {
-                    String usersocket = extractIPAddress(clientSocket.toString());
-
                     if (inputLine.contains("chatauth")) {
                         String[] authInfo = inputLine.split("\\|");
                         if (authInfo.length == 3) {
@@ -53,13 +52,15 @@ public class Server {
                             handleLogin(clientSocket, username, password);
                         }
                     } else {
-                        String user = userMap.get(usersocket);
-                        if (user != null) {
-                            System.out.println(user + ": " + inputLine);
-                            // Sende die Nachricht an alle Clients
-                            for (Socket socket : socketlist) {
-                                PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-                                writer.println(user + ": " + inputLine);
+                        if (authManager.isLoggedIn(usersocket)) {
+                            String user = userMap.get(usersocket);
+                            if (user != null) {
+                                System.out.println(user + ": " + inputLine);
+                                // Sende die Nachricht an alle Clients
+                                for (Socket socket : socketlist) {
+                                    PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                                    writer.println(user + ": " + inputLine);
+                                }
                             }
                         }
                     }
@@ -73,16 +74,19 @@ public class Server {
                     clientSocket.close();
                     socketlist.remove(clientSocket);
 
-                    // Sende eine Nachricht an alle Clients, dass dieser Benutzer den Chat verlassen hat.
-                    for (Socket socket : socketlist) {
-                        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-                        writer.println(username + " has left the chat.");
+                    String user = userMap.get(usersocket);
+                    if (user != null) {
+                        // Sende eine Nachricht an alle Clients, dass dieser Benutzer den Chat verlassen hat.
+                        for (Socket socket : socketlist) {
+                            PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                            writer.println(user + " has left the chat.");
+                        }
                     }
 
                     // Entferne den Benutzer aus der Benutzerzuordnung
-                    String usersocket = extractIPAddress(clientSocket.toString());
                     userMap.remove(usersocket);
                     previousUserMap.remove(usersocket);
+                    authManager.logout(usersocket);
                 } catch (IOException e) {
                     System.err.println("Error closing client connection: " + e);
                 }
@@ -90,33 +94,41 @@ public class Server {
         }
 
         private void handleLogin(Socket clientSocket, String username, String password) throws IOException {
-            String usersocket = extractIPAddress(clientSocket.toString());
-            String prevUser = previousUserMap.get(usersocket); // Vorheriger Benutzername
-            if (prevUser != null) {
-                // Sende eine Nachricht an alle Clients, dass der vorherige Benutzer den Chat verlassen hat
-                for (Socket socket : socketlist) {
-                    PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-                    writer.println(prevUser + " (previously \"" + prevUser + "\")" + " has left the chat.");
+            usersocket = extractIPAddress(clientSocket.toString());
+
+            if (!authManager.isLoggedIn(usersocket)) {
+                if (authManager.authenticate(username, password)) {
+                    String prevUser = previousUserMap.get(usersocket); // Vorheriger Benutzername
+                    if (prevUser != null) {
+                        // Sende eine Nachricht an alle Clients, dass der vorherige Benutzer den Chat verlassen hat
+                        for (Socket socket : socketlist) {
+                            PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                            writer.println(prevUser + " (previously \"" + prevUser + "\")" + " has left the chat.");
+                        }
+                    }
+
+                    authManager.login(usersocket);
+                    userMap.put(usersocket, username);
+                    socketlist.add(clientSocket);
+                    System.out.println(usersocket);
+                    System.out.println(username + " " + usersocket + " connected");
+
+                    // Sende den Benutzernamen an alle Clients
+                    for (Socket socket : socketlist) {
+                        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                        writer.println(username + " has joined the chat.");
+                    }
+
+                    // Speichere den aktuellen Benutzernamen als vorherigen Benutzernamen für diese IP
+                    previousUserMap.put(usersocket, username);
+                } else {
+                    PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
+                    writer.println("Authentication failed. Please check your username and password.");
+                    clientSocket.close();
                 }
-            }
-
-            if (!userMap.containsValue(username)) {
-                userMap.put(usersocket, username);
-                socketlist.add(clientSocket);
-                System.out.println(usersocket);
-                System.out.println(username + " " + usersocket + " connected");
-
-                // Sende den Benutzernamen an alle Clients
-                for (Socket socket : socketlist) {
-                    PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-                    writer.println(username + " has joined the chat.");
-                }
-
-                // Speichere den aktuellen Benutzernamen als vorherigen Benutzernamen für diese IP
-                previousUserMap.put(usersocket, username);
             } else {
                 PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
-                writer.println("Username is already in use. Please choose a different username.");
+                writer.println("You are already logged in.");
                 clientSocket.close();
             }
         }

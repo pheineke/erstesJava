@@ -18,10 +18,10 @@ public class ChatClient {
     private static String password;
 
     public static void main(String[] args) {
-        chatinitJF();
+        chatInitJF();
     }
 
-    public static void chatinitJF() {
+    public static void chatInitJF() {
         JFrame frame = new JFrame("Chat");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -49,8 +49,28 @@ public class ChatClient {
                 Color selectedColor = JColorChooser.showDialog(frame, "Select Chat Background Color", chatBackgroundColor);
                 if (selectedColor != null) {
                     chatBackgroundColor = selectedColor;
-                    if (chatArea != null) {
+                    if (chatArea != null) { // Hier prüfen wir, ob chatArea nicht null ist
                         chatArea.setBackground(chatBackgroundColor);
+                    }
+                }
+            }
+        });
+
+        JButton registerButton = new JButton("Register");
+        registerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                username = userField.getText();
+                password = new String(passwordField.getPassword());
+
+                if (username.isEmpty() || password.isEmpty()) {
+                    JOptionPane.showMessageDialog(frame, "Please enter a username and password", "Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    boolean success = Authentication.registerUser(username, password);
+                    if (success) {
+                        JOptionPane.showMessageDialog(frame, "Registration successful! Please login with the same credentials.", "Registration Success", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(frame, "Username is already in use. Please choose a different username.", "Registration Failed", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
@@ -75,7 +95,7 @@ public class ChatClient {
                     JOptionPane.showMessageDialog(frame, "Please enter a username and password", "Error", JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
-                        chat(hostip, hostport);
+                        chat(hostip, hostport, username, password);
 
                         // Schließe das "Login"-Fenster, nachdem die Verbindung erfolgreich hergestellt wurde
                         frame.dispose();
@@ -98,18 +118,34 @@ public class ChatClient {
         panel.add(colorButton);
 
         frame.getContentPane().add(panel, BorderLayout.CENTER);
-        frame.getContentPane().add(connectButton, BorderLayout.SOUTH);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.add(registerButton);
+        buttonPanel.add(connectButton);
+        frame.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         frame.pack();
         frame.setVisible(true);
     }
 
-    public static void chat(String host, int port) throws IOException {
+    public static void chat(String host, int port, String username, String password) throws IOException {
+        // Überprüfen, ob der Benutzer bereits registriert ist
+        if (!Authentication.isRegisteredUser(username)) {
+            JOptionPane.showMessageDialog(null, "Please register with the given username and password", "Registration Required", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String storedPassword = Authentication.getPasswordForUser(username);
+        if (!password.equals(storedPassword)) {
+            JOptionPane.showMessageDialog(null, "Invalid credentials. Please check your username and password", "Authentication Failed", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         Socket socket = new Socket(host, port);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
 
-        out.println("chatauth|" + username + "|" + password);
+        out.println("chatauth" + username);
 
         JFrame chatFrame = new JFrame("Chat - " + username);
         chatFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
