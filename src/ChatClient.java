@@ -53,6 +53,9 @@ public class ChatClient {
                 } else {
                     try {
                         chat(hostip, hostport, username);
+
+                        // Schließe das "Login"-Fenster, nachdem die Verbindung erfolgreich hergestellt wurde
+                        frame.dispose();
                     } catch (IOException ex) {
                         JOptionPane.showMessageDialog(frame, "Error connecting to server", "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -73,6 +76,7 @@ public class ChatClient {
         frame.pack();
         frame.setVisible(true);
     }
+
 
     public static void chat(String host, int port, String username) throws IOException {
         Socket socket = new Socket(host, port);
