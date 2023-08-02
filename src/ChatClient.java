@@ -15,6 +15,7 @@ public class ChatClient {
     private static PrintWriter out;
     private static Color chatBackgroundColor = DEFAULT_BACKGROUND_COLOR;
     private static String username;
+    private static String password;
 
     public static void main(String[] args) {
         chatinitJF();
@@ -24,10 +25,13 @@ public class ChatClient {
         JFrame frame = new JFrame("Chat");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(4, 2));
+        JPanel panel = new JPanel(new GridLayout(5, 2));
 
         JLabel userLabel = new JLabel("Username:");
         JTextField userField = new JTextField(20);
+
+        JLabel passwordLabel = new JLabel("Password:");
+        JPasswordField passwordField = new JPasswordField(20);
 
         JLabel hostLabel = new JLabel("Host:");
         JTextField hostField = new JTextField(20);
@@ -45,7 +49,7 @@ public class ChatClient {
                 Color selectedColor = JColorChooser.showDialog(frame, "Select Chat Background Color", chatBackgroundColor);
                 if (selectedColor != null) {
                     chatBackgroundColor = selectedColor;
-                    if (chatArea != null) { // Hier prüfen wir, ob chatArea nicht null ist
+                    if (chatArea != null) {
                         chatArea.setBackground(chatBackgroundColor);
                     }
                 }
@@ -57,6 +61,7 @@ public class ChatClient {
             @Override
             public void actionPerformed(ActionEvent e) {
                 username = userField.getText();
+                password = new String(passwordField.getPassword());
                 String hostip = hostField.getText();
                 int hostport;
 
@@ -66,8 +71,8 @@ public class ChatClient {
                     hostport = DEFAULT_PORT;
                 }
 
-                if (username.isEmpty()) {
-                    JOptionPane.showMessageDialog(frame, "Please enter a username", "Error", JOptionPane.ERROR_MESSAGE);
+                if (username.isEmpty() || password.isEmpty()) {
+                    JOptionPane.showMessageDialog(frame, "Please enter a username and password", "Error", JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
                         chat(hostip, hostport);
@@ -83,6 +88,8 @@ public class ChatClient {
 
         panel.add(userLabel);
         panel.add(userField);
+        panel.add(passwordLabel);
+        panel.add(passwordField);
         panel.add(hostLabel);
         panel.add(hostField);
         panel.add(portLabel);
@@ -102,7 +109,7 @@ public class ChatClient {
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
 
-        out.println("chatauth" + username);
+        out.println("chatauth|" + username + "|" + password);
 
         JFrame chatFrame = new JFrame("Chat - " + username);
         chatFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
