@@ -45,7 +45,9 @@ public class ChatClient {
                 Color selectedColor = JColorChooser.showDialog(frame, "Select Chat Background Color", chatBackgroundColor);
                 if (selectedColor != null) {
                     chatBackgroundColor = selectedColor;
-                    chatArea.setBackground(chatBackgroundColor);
+                    if (chatArea != null) { // Hier prüfen wir, ob chatArea nicht null ist
+                        chatArea.setBackground(chatBackgroundColor);
+                    }
                 }
             }
         });
