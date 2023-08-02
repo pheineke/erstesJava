@@ -70,6 +70,7 @@ public class Server {
                     in.close();
                     out.close();
                     clientSocket.close();
+                    socketlist.remove(clientSocket);
                 } catch (IOException e) {
                     System.err.println("Error closing client connection: " + e);
                 }

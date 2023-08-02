@@ -35,27 +35,30 @@ public class ChatClient {
         portField.setText(Integer.toString(DEFAULT_PORT));
 
         JButton connectButton = new JButton("Connect");
-        connectButton.addActionListener(e -> {
-            String username = userField.getText();
-            String hostip = hostField.getText();
-            int hostport;
+        connectButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String username = userField.getText();
+                String hostip = hostField.getText();
+                int hostport;
 
-            try {
-                hostport = Integer.parseInt(portField.getText());
-            } catch (NumberFormatException ex) {
-                hostport = DEFAULT_PORT;
-            }
-
-            if (username.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "Please enter a username", "Error", JOptionPane.ERROR_MESSAGE);
-            } else {
                 try {
-                    chat(hostip, hostport, username);
+                    hostport = Integer.parseInt(portField.getText());
+                } catch (NumberFormatException ex) {
+                    hostport = DEFAULT_PORT;
+                }
 
-                    // Schließe das "Login"-Fenster, nachdem die Verbindung erfolgreich hergestellt wurde
-                    frame.dispose();
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(frame, "Error connecting to server", "Error", JOptionPane.ERROR_MESSAGE);
+                if (username.isEmpty()) {
+                    JOptionPane.showMessageDialog(frame, "Please enter a username", "Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    try {
+                        chat(hostip, hostport, username);
+
+                        // Schließe das "Login"-Fenster, nachdem die Verbindung erfolgreich hergestellt wurde
+                        frame.dispose();
+                    } catch (IOException ex) {
+                        JOptionPane.showMessageDialog(frame, "Error connecting to server", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });
@@ -83,7 +86,7 @@ public class ChatClient {
 
         JFrame chatFrame = new JFrame("Chat - " + username);
         chatFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        chatFrame.setSize(500,500);
+        chatFrame.setSize(500, 500);
 
         JPanel chatPanel = new JPanel(new BorderLayout());
 
@@ -94,20 +97,26 @@ public class ChatClient {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         JTextField messageField = new JTextField(MAX_MESSAGE_LENGTH);
-        messageField.addActionListener(e -> {
-            String message = messageField.getText();
-            if (!message.isEmpty()) {
-                out.println(message);
-                messageField.setText("");
+        messageField.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String message = messageField.getText();
+                if (!message.isEmpty()) {
+                    out.println(message);
+                    messageField.setText("");
+                }
             }
         });
 
         JButton sendButton = new JButton("Send");
-        sendButton.addActionListener(e -> {
-            String message = messageField.getText();
-            if (!message.isEmpty()) {
-                out.println(message);
-                messageField.setText("");
+        sendButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String message = messageField.getText();
+                if (!message.isEmpty()) {
+                    out.println(message);
+                    messageField.setText("");
+                }
             }
         });
 
@@ -135,7 +144,9 @@ public class ChatClient {
             try {
                 String inputLine;
                 while ((inputLine = in.readLine()) != null) {
-                    chatArea.append(inputLine + "\n");
+                    // Aktualisiere die Benutzeroberfläche des Clients mit der empfangenen Nachricht
+                    String finalInputLine = inputLine;
+                    SwingUtilities.invokeLater(() -> chatArea.append(finalInputLine + "\n"));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
