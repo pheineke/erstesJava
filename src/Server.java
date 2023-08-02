@@ -1,42 +1,73 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
-import java.util.Stack;
 
 public class Server {
-    int usersize = 10;
-    static int counter = 0;
-    static final ArrayList userlist = new ArrayList();
-    static final ArrayList socketlist = new ArrayList();
+    private static final int PORT = 3344;
+    private static final int MAX_CONNECTIONS = 10;
+    private static final ArrayList<String> userlist = new ArrayList<>();
+    private static final ArrayList<Socket> socketlist = new ArrayList<>();
+
     public static void main(String[] args) throws IOException {
+        ServerSocket serverSocket = new ServerSocket(PORT);
+        System.out.println("Server started on port " + PORT);
 
-        ServerSocket serverSocket = new ServerSocket(3344);
-        System.out.println("Server started");
+        while (true) {
+            if (socketlist.size() < MAX_CONNECTIONS) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("New client connected: " + clientSocket);
 
-        Socket clientSocket = serverSocket.accept();
-
-        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            String usersocket0 = clientSocket.toString().substring(inputLine.indexOf("Socket[addr=/") + 14 , clientSocket.toString().length());
-            String usersocket = usersocket0.split("\\,", 2)[0];
-
-
-            if (!inputLine.contains("chatauth")) {
-                if (socketlist.contains(usersocket)) {
-                    String user = (String) userlist.get(socketlist.indexOf(usersocket));
-                    System.out.println(user);
-                    System.out.println(user + ": " + inputLine);
-                    out.println(user + ": " + inputLine);
-                }
+                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                Thread clientThread = new Thread(clientHandler);
+                clientThread.start();
             }
-            if (inputLine.contains("chatauth")) {
-                String user = inputLine.substring(inputLine.indexOf("chatauth") + 8 , inputLine.length());
-                userlist.add(user);
-                socketlist.add(usersocket);
-                System.out.println(user + " " + usersocket + " connected");
+        }
+    }
+
+    private static class ClientHandler implements Runnable {
+        private Socket clientSocket;
+        private BufferedReader in;
+        private PrintWriter out;
+
+        public ClientHandler(Socket socket) throws IOException {
+            clientSocket = socket;
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
+        }
+
+        @Override
+        public void run() {
+            try {
+                String inputLine;
+                while ((inputLine = in.readLine()) != null) {
+                    String usersocket0 = clientSocket.toString().substring(clientSocket.toString().indexOf("Socket[addr=/") + 14, clientSocket.toString().length());
+                    String usersocket = usersocket0.split("\\,", 2)[0];
+
+                    if (!inputLine.contains("chatauth")) {
+                        if (socketlist.contains(clientSocket)) {
+                            String user = (String) userlist.get(socketlist.indexOf(clientSocket));
+                            System.out.println(user);
+                            System.out.println(user + ": " + inputLine);
+                            out.println(user + ": " + inputLine);
+                        }
+                    }
+                    if (inputLine.contains("chatauth")) {
+                        String user = inputLine.substring(inputLine.indexOf("chatauth") + 8, inputLine.length());
+                        userlist.add(user);
+                        socketlist.add(clientSocket);
+                        System.out.println(user + " " + usersocket + " connected");
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Error handling client: " + e);
+            } finally {
+                try {
+                    in.close();
+                    out.close();
+                    clientSocket.close();
+                } catch (IOException e) {
+                    System.err.println("Error closing client connection: " + e);
+                }
             }
         }
     }
