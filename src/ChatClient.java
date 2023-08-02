@@ -10,6 +10,8 @@ public class ChatClient {
     private static final int MAX_MESSAGE_LENGTH = 100;
 
     private static JTextArea chatArea;
+    private static BufferedReader in;
+    private static PrintWriter out;
 
     public static void main(String[] args) {
         chatinitJF();
@@ -74,48 +76,65 @@ public class ChatClient {
 
     public static void chat(String host, int port, String username) throws IOException {
         Socket socket = new Socket(host, port);
-        System.out.println("Connected to server");
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        out = new PrintWriter(socket.getOutputStream(), true);
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        out.println("chatauth" + username);
 
-        BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+        JFrame chatFrame = new JFrame("Chat - " + username);
+        chatFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        //CHAT AUTHENTICATION
-        String auth = "chatauth" + username.toString();
-        out.println(auth);
-        //..
+        JPanel chatPanel = new JPanel(new BorderLayout());
 
-        // Create chat area
         chatArea = new JTextArea(20, 50);
-        JFrame frame = new JFrame("Chat");
-        frame.getContentPane().add(new JScrollPane(chatArea));
-        frame.pack();
-        frame.setVisible(true);
+        chatArea.setEditable(false);
 
-        // Start server listener thread
-        ServerListener serverListener = new ServerListener(in);
-        Thread serverThread = new Thread(serverListener);
-        serverThread.start();
+        JScrollPane scrollPane = new JScrollPane(chatArea);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        String userInput;
-
-        while ((userInput = stdIn.readLine()) != null) {
-            if (userInput.length() > MAX_MESSAGE_LENGTH) {
-                System.out.println("Message too long (max " + MAX_MESSAGE_LENGTH + " characters)");
-            } else {
-                out.println(userInput);
+        JTextField messageField = new JTextField(MAX_MESSAGE_LENGTH);
+        messageField.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String message = messageField.getText();
+                if (!message.isEmpty()) {
+                    out.println(message);
+                    messageField.setText("");
+                }
             }
-        }
+        });
+
+        JButton sendButton = new JButton("Send");
+        sendButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String message = messageField.getText();
+                if (!message.isEmpty()) {
+                    out.println(message);
+                    messageField.setText("");
+                }
+            }
+        });
+
+        chatPanel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel inputPanel = new JPanel(new BorderLayout());
+        inputPanel.add(messageField, BorderLayout.CENTER);
+        inputPanel.add(sendButton, BorderLayout.EAST);
+
+        chatPanel.add(inputPanel, BorderLayout.SOUTH);
+
+        chatFrame.getContentPane().add(chatPanel);
+
+        chatFrame.pack();
+        chatFrame.setVisible(true);
+
+        ServerListener serverListener = new ServerListener();
+        Thread listenerThread = new Thread(serverListener);
+        listenerThread.start();
     }
 
     private static class ServerListener implements Runnable {
-        private BufferedReader in;
-
-        public ServerListener(BufferedReader in) {
-            this.in = in;
-        }
-
         @Override
         public void run() {
             try {
@@ -124,7 +143,7 @@ public class ChatClient {
                     chatArea.append(inputLine + "\n");
                 }
             } catch (IOException e) {
-                System.err.println("Error reading from server: " + e);
+                e.printStackTrace();
             }
         }
     }
