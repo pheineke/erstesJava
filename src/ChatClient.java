@@ -35,30 +35,27 @@ public class ChatClient {
         portField.setText(Integer.toString(DEFAULT_PORT));
 
         JButton connectButton = new JButton("Connect");
-        connectButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String username = userField.getText();
-                String hostip = hostField.getText();
-                int hostport;
+        connectButton.addActionListener(e -> {
+            String username = userField.getText();
+            String hostip = hostField.getText();
+            int hostport;
 
+            try {
+                hostport = Integer.parseInt(portField.getText());
+            } catch (NumberFormatException ex) {
+                hostport = DEFAULT_PORT;
+            }
+
+            if (username.isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "Please enter a username", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
                 try {
-                    hostport = Integer.parseInt(portField.getText());
-                } catch (NumberFormatException ex) {
-                    hostport = DEFAULT_PORT;
-                }
+                    chat(hostip, hostport, username);
 
-                if (username.isEmpty()) {
-                    JOptionPane.showMessageDialog(frame, "Please enter a username", "Error", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    try {
-                        chat(hostip, hostport, username);
-
-                        // Schließe das "Login"-Fenster, nachdem die Verbindung erfolgreich hergestellt wurde
-                        frame.dispose();
-                    } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(frame, "Error connecting to server", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
+                    // Schließe das "Login"-Fenster, nachdem die Verbindung erfolgreich hergestellt wurde
+                    frame.dispose();
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(frame, "Error connecting to server", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -76,7 +73,6 @@ public class ChatClient {
         frame.pack();
         frame.setVisible(true);
     }
-
 
     public static void chat(String host, int port, String username) throws IOException {
         Socket socket = new Socket(host, port);
@@ -98,26 +94,20 @@ public class ChatClient {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         JTextField messageField = new JTextField(MAX_MESSAGE_LENGTH);
-        messageField.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String message = messageField.getText();
-                if (!message.isEmpty()) {
-                    out.println(message);
-                    messageField.setText("");
-                }
+        messageField.addActionListener(e -> {
+            String message = messageField.getText();
+            if (!message.isEmpty()) {
+                out.println(message);
+                messageField.setText("");
             }
         });
 
         JButton sendButton = new JButton("Send");
-        sendButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String message = messageField.getText();
-                if (!message.isEmpty()) {
-                    out.println(message);
-                    messageField.setText("");
-                }
+        sendButton.addActionListener(e -> {
+            String message = messageField.getText();
+            if (!message.isEmpty()) {
+                out.println(message);
+                messageField.setText("");
             }
         });
 
