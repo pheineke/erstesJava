@@ -87,10 +87,11 @@ public class ChatClient {
 
         JFrame chatFrame = new JFrame("Chat - " + username);
         chatFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        chatFrame.setSize(500,500);
 
         JPanel chatPanel = new JPanel(new BorderLayout());
 
-        chatArea = new JTextArea(20, 50);
+        chatArea = new JTextArea(20, 20);
         chatArea.setEditable(false);
 
         JScrollPane scrollPane = new JScrollPane(chatArea);

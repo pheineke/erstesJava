@@ -40,8 +40,7 @@ public class Server {
             try {
                 String inputLine;
                 while ((inputLine = in.readLine()) != null) {
-                    String usersocket0 = clientSocket.toString().substring(clientSocket.toString().indexOf("Socket[addr=/") + 14, clientSocket.toString().length());
-                    String usersocket = usersocket0.split("\\,", 2)[0];
+                    String usersocket = extractIPAddress(clientSocket.toString());
 
                     if (!inputLine.contains("chatauth")) {
                         if (socketlist.contains(clientSocket)) {
@@ -56,9 +55,11 @@ public class Server {
                         }
                     }
                     if (inputLine.contains("chatauth")) {
+                        System.out.println(inputLine);
                         String user = inputLine.substring(inputLine.indexOf("chatauth") + 8, inputLine.length());
                         userlist.add(user);
                         socketlist.add(clientSocket);
+                        System.out.println(usersocket);
                         System.out.println(user + " " + usersocket + " connected");
                     }
                 }
@@ -75,4 +76,18 @@ public class Server {
             }
         }
     }
+
+    public static String extractIPAddress(String socketString) {
+        // Finde den Startindex der IP-Adresse im String
+        int startIndex = socketString.indexOf("/");
+
+        // Finde den Endindex der IP-Adresse im String
+        int endIndex = socketString.indexOf(",", startIndex);
+
+        // Extrahiere die IP-Adresse aus dem String
+        String ipAddress = socketString.substring(startIndex + 1, endIndex);
+
+        return ipAddress;
+    }
+
 }
