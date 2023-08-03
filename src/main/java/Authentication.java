@@ -1,3 +1,5 @@
+package main.java;
+
 import java.io.*;
 import java.util.HashMap;
 import com.google.gson.Gson;
