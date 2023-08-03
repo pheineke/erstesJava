@@ -73,7 +73,7 @@ public class ChatClient {
                     username = userField.getText();
                     password = passwordField.getText();
                 } catch (NullPointerException ex) {
-                    JOptionPane.showMessageDialog(frame, "Please enter a username and password", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(frame, "Please enter a username and password", "Error", JOptionPane.INFORMATION_MESSAGE);
                 }
 
                 if (Authentication.registerUser(username, password)) {
@@ -232,6 +232,4 @@ public class ChatClient {
             }
         }
     }
-
-
 }
