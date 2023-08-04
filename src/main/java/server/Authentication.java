@@ -1,4 +1,4 @@
-package main.java;
+package main.java.server;
 
 import java.io.*;
 import java.util.HashMap;
@@ -9,9 +9,27 @@ public class Authentication {
     private static final String AUTH_FILE = "auth.json";
     private static final HashMap<String, String> userMap = new HashMap<>();
 
-    public static boolean isRegisteredUser(String username) {
+    protected static final Exception NotRegistered = new Exception();
+    protected static final Exception FalseLogin = new Exception();
+
+    public static Exception isRegisteredUser(String username) {
         loadUserData();
-        return userMap.containsKey(username);
+        if (!userMap.containsKey(username)) {
+            return NotRegistered;
+        }
+        return null;
+    }
+    public static Exception FalseLogin(String username, String password) {
+        loadUserData();
+        if (userMap.get(username).equals(password)) {
+            return FalseLogin;
+        }
+        return null;
+    }
+
+    public static boolean isRightPassword(String username, String password) {
+        loadUserData();
+        return userMap.get(username) == password;
     }
 
     public static boolean registerUser(String username, String password) {

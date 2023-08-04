@@ -1,4 +1,6 @@
-package main.java;
+package main.java.client;
+
+import main.java.server.Authentication;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,7 +11,12 @@ import java.net.*;
 public class ChatClient {
     private static final String DEFAULT_HOST = "localhost";
     private static final int DEFAULT_PORT = 3344;
+    private static String HOST = DEFAULT_HOST;
+    private static int PORT = DEFAULT_PORT;
     private static final int MAX_MESSAGE_LENGTH = 100;
+
+
+    protected static Socket socket;
 
     private static BufferedReader in;
     private static PrintWriter out;
@@ -91,25 +98,36 @@ public class ChatClient {
                 username = userField.getText();
                 password = new String(passwordField.getPassword());
                 String hostip = hostField.getText();
-                int hostport;
 
                 try {
-                    hostport = Integer.parseInt(portField.getText());
-                } catch (NumberFormatException ex) {
-                    hostport = DEFAULT_PORT;
+                    HOST = hostField.getText();
+                } catch (NullPointerException ex) {
+                    ;
                 }
 
-                if (username.isEmpty() || password.isEmpty()) {
-                    JOptionPane.showMessageDialog(frame, "Please enter a username and password", "Error", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    try {
-                        chat(hostip, hostport, username, password);
+                try {
+                    username = userField.getText();
+                    password = new String(passwordField.getPassword());
+                } catch (NullPointerException ex) {
+                    JOptionPane.showMessageDialog(frame, "Please enter a username and password", "Error", JOptionPane.INFORMATION_MESSAGE);
+                }
 
-                        // Schließe das "Login"-Fenster, nachdem die Verbindung erfolgreich hergestellt wurde
+                try {
+                    PORT = Integer.parseInt(portField.getText());
+                } catch (NumberFormatException ex) {
+                    PORT = DEFAULT_PORT;
+                }
+
+                if (ClientAuth.isRegisteredUser(username)) {
+                    try {
                         frame.dispose();
+                        chat(hostip, PORT, username, password);
+
                     } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(frame, "Error connecting to server", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(frame, "Cannot connect to Server.", "Error", JOptionPane.INFORMATION_MESSAGE);
                     }
+                } else {
+                    JOptionPane.showMessageDialog(frame, "There is no registered User " + username + ".", "Error", JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         });
@@ -158,7 +176,6 @@ public class ChatClient {
 
         JFrame chatFrame = new JFrame("Chat - " + username);
         chatFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        chatFrame.setSize(500, 500);
 
         JPanel chatPanel = new JPanel(new BorderLayout());
         chatArea = new JTextArea(20, 20);
@@ -231,5 +248,20 @@ public class ChatClient {
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean isRegisteredUser(String username) throws Exception {
+        Socket socket = new Socket(HOST, PORT);
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        out = new PrintWriter(socket.getOutputStream(), true);
+
+        return true;
+    }
+    private boolean isRightPassword(String username, String password) {
+        Socket socket = new Socket(HOST, PORT);
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        out = new PrintWriter(socket.getOutputStream(), true);
+
+        return true;
     }
 }
