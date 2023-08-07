@@ -1,6 +1,7 @@
 package main.java.client;
 
 import main.java.server.Authentication;
+import main.java.server.ClientHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,8 +12,8 @@ import java.net.*;
 public class ChatClient {
     private static final String DEFAULT_HOST = "localhost";
     private static final int DEFAULT_PORT = 3344;
-    private static String HOST = DEFAULT_HOST;
-    private static int PORT = DEFAULT_PORT;
+    protected static String HOST = DEFAULT_HOST;
+    protected static int PORT = DEFAULT_PORT;
     private static final int MAX_MESSAGE_LENGTH = 100;
 
 
@@ -69,25 +70,12 @@ public class ChatClient {
             }
         });
 
+
         JButton registerButton = new JButton("Register");
         registerButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                username = userField.getText();
-                password = new String(passwordField.getPassword());
-
-                try {
-                    username = userField.getText();
-                    password = passwordField.getText();
-                } catch (NullPointerException ex) {
-                    JOptionPane.showMessageDialog(frame, "Please enter a username and password", "Error", JOptionPane.INFORMATION_MESSAGE);
-                }
-
-                if (Authentication.registerUser(username, password)) {
-                    JOptionPane.showMessageDialog(frame, "Registration successful! Please login with the same credentials.", "Registration Success", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(frame, "Username is already in use. Please choose a different username.", "Registration Failed", JOptionPane.INFORMATION_MESSAGE);
-                }
+                inputs(frame, userField, passwordField, portField, hostField, "register");
             }
         });
 
@@ -95,43 +83,9 @@ public class ChatClient {
         connectButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                username = userField.getText();
-                password = new String(passwordField.getPassword());
-                String hostip = hostField.getText();
-
-                try {
-                    HOST = hostField.getText();
-                } catch (NullPointerException ex) {
-                    ;
-                }
-
-                try {
-                    username = userField.getText();
-                    password = new String(passwordField.getPassword());
-                } catch (NullPointerException ex) {
-                    JOptionPane.showMessageDialog(frame, "Please enter a username and password", "Error", JOptionPane.INFORMATION_MESSAGE);
-                }
-
-                try {
-                    PORT = Integer.parseInt(portField.getText());
-                } catch (NumberFormatException ex) {
-                    PORT = DEFAULT_PORT;
-                }
-
-                if (ClientAuth.isRegisteredUser(username)) {
-                    try {
-                        frame.dispose();
-                        chat(hostip, PORT, username, password);
-
-                    } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(frame, "Cannot connect to Server.", "Error", JOptionPane.INFORMATION_MESSAGE);
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(frame, "There is no registered User " + username + ".", "Error", JOptionPane.INFORMATION_MESSAGE);
-                }
+                inputs(frame, userField, passwordField, portField, hostField, "login");
             }
         });
-
 
         panel.add(userLabel);
         panel.add(userField);
@@ -155,9 +109,64 @@ public class ChatClient {
         frame.setVisible(true);
     }
 
+    public static void inputs(JFrame frame, JTextField userField, JPasswordField passwordField, JTextField portField, JTextField hostField, String userAction) {
+        username = userField.getText();
+        password = new String(passwordField.getPassword());
+        String hostip = hostField.getText();
+
+        try {
+            HOST = hostField.getText();
+        } catch (NullPointerException ex) {
+            ;
+        }
+
+        try {
+            username = userField.getText();
+            password = new String(passwordField.getPassword());
+        } catch (NullPointerException ex) {
+            JOptionPane.showMessageDialog(frame, "Please enter a username and password", "Error", JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        try {
+            PORT = Integer.parseInt(portField.getText());
+        } catch (NumberFormatException ex) {
+            PORT = DEFAULT_PORT;
+        }
+
+        if (userAction == "login") {
+
+            if (ClientHandler.isRegisteredUser(username)) {
+                try {
+                    frame.dispose();
+                    chat(hostip, PORT, username, password);
+
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(frame, "Cannot connect to Server.", "Error", JOptionPane.INFORMATION_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(frame, "There is no registered User " + username + ".", "Error", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+        if (userAction == "register") {
+
+            if (ClientHandler.registerUser(username, password)) {
+                JOptionPane.showMessageDialog(frame, "Registration successful! Please login with the same credentials.", "Registration Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Username is already in use. Please choose a different username.", "Registration Failed", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+    }
+
+    public static void chatSocket(String host, int port) throws IOException {
+        Socket socket = new Socket(host, port);
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        out = new PrintWriter(socket.getOutputStream(), true);
+
+    }
+
     public static void chat(String host, int port, String username, String password) throws IOException {
         // Überprüfen, ob der Benutzer bereits registriert ist
-        if (!Authentication.isRegisteredUser(username)) {
+        if (!ClientHandler.isRegisteredUser(username)) {
             JOptionPane.showMessageDialog(null, "Please register with the given username and password", "Registration Required", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -168,9 +177,7 @@ public class ChatClient {
             return;
         }
 
-        Socket socket = new Socket(host, port);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(socket.getOutputStream(), true);
+        chatSocket(host, port);
 
         out.println("chatauth" + "|" + username + "|" + password);
 
@@ -228,6 +235,9 @@ public class ChatClient {
     }
 
 
+
+
+
     private static class ServerListener implements Runnable {
         private BufferedReader in;
 
@@ -248,20 +258,5 @@ public class ChatClient {
                 e.printStackTrace();
             }
         }
-    }
-
-    private boolean isRegisteredUser(String username) throws Exception {
-        Socket socket = new Socket(HOST, PORT);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(socket.getOutputStream(), true);
-
-        return true;
-    }
-    private boolean isRightPassword(String username, String password) {
-        Socket socket = new Socket(HOST, PORT);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(socket.getOutputStream(), true);
-
-        return true;
     }
 }

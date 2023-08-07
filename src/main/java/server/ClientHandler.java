@@ -1,5 +1,9 @@
 package main.java.server;
 
+import main.java.client.ChatClient;
+import main.java.server.Authentication;
+import main.java.server.AuthenticationManager;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,11 +18,18 @@ public class ClientHandler implements Runnable {
     private PrintWriter out;
     private String usersocket;
 
+    private static String HOST = ChatClient.HOST;
+    private static int PORT = ChatClient.PORT;
+
+
     public ClientHandler(Socket socket) throws IOException {
         clientSocket = socket;
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         out = new PrintWriter(clientSocket.getOutputStream(), true);
     }
+
+
+
 
     @Override
     public void run() {

@@ -10,20 +10,23 @@ import static main.java.client.ChatClient.socket;
 
 public class ClientAuth {
 
-    private BufferedReader in;
-    private PrintWriter out;
+    private static BufferedReader in;
+    private static PrintWriter out;
 
-    private Socket clientSocket = socket;
+    private Socket clientSocket;
 
-    protected boolean isRegisteredUser(String username) throws IOException {
+    protected ClientAuth(Socket socket) throws IOException {
         clientSocket = socket;
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         out = new PrintWriter(clientSocket.getOutputStream(), true);
+    }
 
+    public static boolean isRegisteredUser(String username) {
+        String outstring = String.format("isregistered:%s", username);
+        out.println(outstring);
 
     }
 
-    public void ClientHandler(Socket socket) throws IOException {
-
+    public static boolean registerUser(String username, String password) {
     }
 }
