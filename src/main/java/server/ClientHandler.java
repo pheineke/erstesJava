@@ -18,7 +18,7 @@ public class ClientHandler implements Runnable {
     private PrintWriter out;
     private String usersocket;
 
-    private static String HOST = ChatClient.HOST;
+    private static String HOST = Server.HOST;
     private static int PORT = ChatClient.PORT;
 
 

@@ -109,7 +109,7 @@ public class ChatClient {
         frame.setVisible(true);
     }
 
-    public static void inputs(JFrame frame, JTextField userField, JPasswordField passwordField, JTextField portField, JTextField hostField, String userAction) {
+    public static void inputs(JFrame frame, JTextField userField, JPasswordField passwordField, JTextField portField, JTextField hostField, String userAction) throws IOException {
         username = userField.getText();
         password = new String(passwordField.getPassword());
         String hostip = hostField.getText();
@@ -135,7 +135,7 @@ public class ChatClient {
 
         if (userAction == "login") {
 
-            if (ClientHandler.isRegisteredUser(username)) {
+            if (ClientAuth.isRegisteredUser(username)) {
                 try {
                     frame.dispose();
                     chat(hostip, PORT, username, password);
@@ -149,7 +149,7 @@ public class ChatClient {
         }
         if (userAction == "register") {
 
-            if (ClientHandler.registerUser(username, password)) {
+            if (ClientAuth.registerUser(username, password)) {
                 JOptionPane.showMessageDialog(frame, "Registration successful! Please login with the same credentials.", "Registration Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(frame, "Username is already in use. Please choose a different username.", "Registration Failed", JOptionPane.INFORMATION_MESSAGE);
@@ -166,7 +166,7 @@ public class ChatClient {
 
     public static void chat(String host, int port, String username, String password) throws IOException {
         // Überprüfen, ob der Benutzer bereits registriert ist
-        if (!ClientHandler.isRegisteredUser(username)) {
+        if (!ClientAuth.isRegisteredUser(username)) {
             JOptionPane.showMessageDialog(null, "Please register with the given username and password", "Registration Required", JOptionPane.INFORMATION_MESSAGE);
             return;
         }

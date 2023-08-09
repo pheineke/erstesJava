@@ -2,8 +2,8 @@ package main.java.server;
 
 import java.io.*;
 import java.util.HashMap;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import java.util.Objects;
+
 
 public class Authentication {
     private static final String AUTH_FILE = "auth.json";
@@ -29,7 +29,7 @@ public class Authentication {
 
     public static boolean isRightPassword(String username, String password) {
         loadUserData();
-        return userMap.get(username) == password;
+        return Objects.equals(userMap.get(username), password);
     }
 
     public static boolean registerUser(String username, String password) {
